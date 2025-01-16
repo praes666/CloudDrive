@@ -1,23 +1,66 @@
 import { useState } from 'react';
+import axios from 'axios';
 import '../styles/styles.scss'
 import FileContainer from './fileContainer.jsx';
 
+
 export default function App() {
     const [fileList, setFileList] = useState([])
+    const [authvis, setAuthvis] = useState(false)
+    const [authData, setAuthdata] = useState({login: '', password: ''})
+
+    const authChange = (e) => {
+        setAuthdata({...authData, [e.target.name]: e.target.value})
+    }
+
+    const authRequest = async (type) => {
+        try{
+            const response = await axios.post('http://localhost:3000/auth/', {authData, type})
+            if(response.status == 201){
+                if(response.data.token != undefined) localStorage.setItem('token', response.data.token)
+                window.location.reload()
+                alert(response.data.message)
+            }
+        } catch(error){
+            console.error(error)
+        }
+    }
+
     return (
       <div>
         <div className="header">
           <img className="logo" src="https://www.freeiconspng.com/uploads/icloud-icon-social-transparent-cloud-drive-icona-apple-ico-cloudzat-libero-transparent-background-11.png" alt=""/>
           {localStorage.getItem("token") != null ? (
-            <img className="avatar" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS1OekKC4YW_f_YZUuz4TIuyMWF_homG7XZCA&s" alt=""/>
+            <div className='right_div'>
+                <p>{JSON.parse(atob(localStorage.getItem('token').split('.')[1]))?.login}</p>
+                <div className='logout' onClick={() => {localStorage.removeItem('token'); window.location.reload()}}>
+                    <p>Выход</p>
+                    <img src="https://cdn-icons-png.flaticon.com/512/152/152532.png" alt="" />
+                </div>
+            </div>
           ) : (
-            <div className="regbtn">
-              <div>
-                <img src="https://eduprosvet.ru/image/avatar.png" alt="" />
-                <p>Профиль</p>
+              <div className="regbtn">
+              <div onClick={() => {setAuthvis(!authvis)}}>
+                <p>Вход</p>
+                <img src="https://cdn-icons-png.flaticon.com/512/152/152532.png" alt="" />
               </div>
             </div>
           )}
+          {
+            authvis ?
+            (
+                <div className='authwindow'>
+                    <input name='login' type="text" placeholder='Логин' onChange={authChange}/>
+                    <input name='password' type="text" placeholder='Пароль' onChange={authChange}/>
+                    <div onClick={() => authRequest('auth')}>
+                        <p>Войти</p>
+                    </div>
+                    <p onClick={() => authRequest('reg')}>Регистрация</p>
+                </div>
+            )
+            :
+            null
+          }
         </div>
   
         <div className="mainpage">

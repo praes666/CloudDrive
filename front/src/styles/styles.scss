@@ -12,32 +12,54 @@ p {
   .logo {
     height: 100%;
   }
-  .avatar {
-    width: 22%;
-    border-radius: 50%;
-    border: 2px solid $soft-color;
-    justify-self: right;
-    margin-right: 10%;
+  .right_div{
+    display: flex;
+    align-items: center;
+    height: 100%;
   }
-  .regbtn {
-    div {
-        img{
-            height: 75%;
-            border-radius: 50%;
-        }
-      border: 1px solid $soft-color;
-      gap: 5px;
-      border-radius: 5px;
-      width: 120px;
+  .logout{
+      .avatar {
+        height: 75%;
+        border-radius: 50%;
+        border: 2px solid $soft-color;
+        justify-self: right;
+      }
+      img{
+        height: 40%;
+      }
       display: flex;
-      justify-content: center;
       align-items: center;
+      gap: 10px;
+      height: 100%;
+      width: 100%;
+      margin-left: 50px;
+      justify-content: right;
+  }:hover{cursor: pointer;}
+  .regbtn {
+    div{
+        img{
+            height: 60%;
+        }
+        border: 1px solid $soft-color;
+        gap: 5px;
+        border-radius: 5px;
+        width: 100px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
     }
+    :hover{
+        cursor: pointer;
+      }
     height: 65%;
     gap: 2%;
     justify-content: center;
     display: flex;
   }
+
+  top: 0;
+  z-index: 99;
+  position: sticky;
   display: flex;  
   align-items: center;
   padding-left: 25px;
@@ -45,6 +67,7 @@ p {
   border-bottom: 1px solid $soft-color;
   height: 50px;
   justify-content: space-between;
+  background-color: #ffffff;
   gap: 1%;
 }
 
@@ -52,7 +75,7 @@ p {
     display: flex;
     justify-content: flex-start;
     flex-wrap: wrap;
-    gap: 0.4%;
+    gap: 0.3%;
   padding: 1%;
 }
 
@@ -70,5 +93,35 @@ p {
   height: 250px;
   border-radius: 10px;
   border: 1px solid $soft-color;
-  margin-bottom: 0.4%;
+  margin-bottom: 0.3%;
+}
+
+.authwindow{
+    div, input{
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 85%;
+        height: 20%;
+        border: 1px solid $soft-color;
+        border-radius: 5px;    
+    }:hover{
+        cursor: pointer;
+    }
+    input{
+        width: 80%;
+        padding-left: 5%;
+    }
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    width: 200px;
+    right: 25px;
+    top: 50px;
+    gap: 5px;
+    height: 150px;
+    background-color: #ffffff;
+    border: 1px solid $soft-color;
 }
