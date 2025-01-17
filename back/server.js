@@ -24,8 +24,7 @@ app.post('/auth', async (req, res) => {
         }else{
             const user = await db.query('SELECT * FROM users WHERE login = $1', [authData.login])
             if(user.rowCount == 0) return res.status(201).json({message: 'Пользователя не существует!'})
-            if(!bcrypt.compareSync(authData.password, user.rows[0].password)) return res.status(201).json({message: 'Неверный пароль'})
-
+            if(!bcrypt.compareSync(authData.password, user.rows[0].password)) return res.status(201).json({message: 'Неверный пароль'}) 
             const token = jwt.sign({id: user.rows[0].id, login: user.rows[0].login}, JWS_SECRET, {expiresIn: '1h'})
             return res.status(201).json({message: 'Успешная авторизация', token: token})
         }
@@ -33,7 +32,17 @@ app.post('/auth', async (req, res) => {
         console.error('auth error:', err);
         res.status(500).send('Ошибка сервера');
     }
-  });
+});
+
+app.post('/upload', (req, res) => {
+    try{
+        console.log(req.body)
+        return res.status(200).send(req.files)
+    }catch(err){
+        console.error('upload error:', err);
+        res.status(500).send('Ошибка сервера');
+    }
+})
 
 app.listen(port, () => {
     console.log(`Сервер запущен на http://localhost:${port}`);

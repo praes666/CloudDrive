@@ -1,24 +1,38 @@
 import { useState } from 'react';
 import axios from 'axios';
+import { FaCirclePlus } from "react-icons/fa6";
+import { IoIosCloudDownload } from "react-icons/io";
 import '../styles/styles.scss'
 import FileContainer from './fileContainer.jsx';
 
 
 export default function App() {
-    const [fileList, setFileList] = useState([])
-    const [authvis, setAuthvis] = useState(false)
     const [authData, setAuthdata] = useState({login: '', password: ''})
+    const [fileList, setFileList] = useState([])
+	const [authvis, setAuthvis] = useState(false)
+	const [addFile, setAddFile] = useState(false)
 
     const authChange = (e) => {
         setAuthdata({...authData, [e.target.name]: e.target.value})
     }
 
+	const fileListChange = async (e) => {
+		setFileList(e.target.file)
+		console.log('fileList: ', fileList)
+		const data = new FormData()
+		fileList.forEach(file => {
+			data.append('file', file)
+		})
+		const response = await axios.post('http://localhost:3000/upload', fileList)
+		console.log('response: ', response)
+	}
+
     const authRequest = async (type) => {
         try{
-            const response = await axios.post('http://localhost:3000/auth/', {authData, type})
+            const response = await axios.post('http://localhost:3000/auth', {authData, type})
             if(response.status == 201){
                 if(response.data.token != undefined) localStorage.setItem('token', response.data.token)
-                window.location.reload()
+               	window.location.reload()
                 alert(response.data.message)
             }
         } catch(error){
@@ -61,10 +75,22 @@ export default function App() {
             :
             null
           }
-        </div>
-  
+        </div>  
+        <FaCirclePlus className='plusIcon' onClick={() => setAddFile(true)}/>
+		{
+			addFile ? 
+			<div className='addFileInv' onClick={() => setAddFile(false)}>
+				<div className='addFileField' onClick={(e) => e.stopPropagation()}>
+					<input type="file" multiple onChange={fileListChange}/>
+					<IoIosCloudDownload className='icon'/>
+					<p>Перетащите сюда файл!</p>
+				</div>
+			</div>
+			:
+			null
+		}
         <div className="mainpage">
-          <FileContainer/>
+        	<FileContainer/>
         </div>
       </div>
     );
