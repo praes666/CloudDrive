@@ -16,16 +16,30 @@ export default function App() {
         setAuthdata({...authData, [e.target.name]: e.target.value})
     }
 
-	const fileListChange = async (e) => {
-		setFileList(e.target.file)
-		console.log('fileList: ', fileList)
-		const data = new FormData()
-		fileList.forEach(file => {
-			data.append('file', file)
-		})
-		const response = await axios.post('http://localhost:3000/upload', fileList)
-		console.log('response: ', response)
+  	const fileListChange = async (e) => {
+      	setFileList(e.target.files)   
 	}
+
+    const uploadFile = async () => {
+		try{
+			const formData = new FormData()
+			Array.from(fileList).forEach(file => {
+				formData.append('files', file)
+			})
+			const token = localStorage.getItem('token')
+			console.log(fileList)
+			console.log('formData: ', formData)
+			const response = await axios.post('http://localhost:3000/upload', formData, {headers: {
+				Authorization: token,
+				'Content-Type': 'multipart/form-data'
+			}})
+			if(response.status == 201){
+				window.location.reload()
+			}
+		}catch(err){
+			console.error('upload files error', err)
+		}
+    }
 
     const authRequest = async (type) => {
         try{
@@ -81,7 +95,8 @@ export default function App() {
 			addFile ? 
 			<div className='addFileInv' onClick={() => setAddFile(false)}>
 				<div className='addFileField' onClick={(e) => e.stopPropagation()}>
-					<input type="file" multiple onChange={fileListChange}/>
+					<input type="file" name='files' multiple onChange={fileListChange}/>
+          			<button onClick={uploadFile}>upload</button>
 					<IoIosCloudDownload className='icon'/>
 					<p>Перетащите сюда файл!</p>
 				</div>

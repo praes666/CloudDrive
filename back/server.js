@@ -1,5 +1,7 @@
 const express = require('express');
 const cors = require('cors');
+const multer = require('multer')
+const path = require('path')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken');
 const db = require('./db')
@@ -25,22 +27,45 @@ app.post('/auth', async (req, res) => {
             const user = await db.query('SELECT * FROM users WHERE login = $1', [authData.login])
             if(user.rowCount == 0) return res.status(201).json({message: 'Пользователя не существует!'})
             if(!bcrypt.compareSync(authData.password, user.rows[0].password)) return res.status(201).json({message: 'Неверный пароль'}) 
-            const token = jwt.sign({id: user.rows[0].id, login: user.rows[0].login}, JWS_SECRET, {expiresIn: '1h'})
+            const token = jwt.sign({id: user.rows[0].users_id, login: user.rows[0].login}, JWS_SECRET, {expiresIn: '1h'})
             return res.status(201).json({message: 'Успешная авторизация', token: token})
         }
     }catch(err){
         console.error('auth error:', err);
-        res.status(500).send('Ошибка сервера');
+        return res.status(500).send('Ошибка сервера');
     }
 });
 
-app.post('/upload', (req, res) => {
+
+
+const tokenVerify = (req, res, next) => {
+    if(jwt.verify(req.headers.authorization, JWS_SECRET)){
+        req.user = jwt.decode(req.headers.authorization, JWS_SECRET)
+        next()
+    }
+}
+
+const storage = multer.diskStorage({
+    destination: (req, file, cd) => {
+        const userFolder = path.join(__dirname, 'uploads', req.user.login)
+        if (!fs.existsSync(userFolder)) {
+            fs.mkdirSync(userFolder, { recursive: true })
+        }
+        cb(null, userFolder)
+    },
+    filename: (req, file, cd) => {
+        cd(null, `${Date.now()}-${file.originalname}`)
+    }
+})
+const upload = multer({storage})
+
+app.post('/upload', tokenVerify, upload.array('files'), (req, res) => {
     try{
-        console.log(req.body)
-        return res.status(200).send(req.files)
+        // await db.query
+        return res.status(201).send('File uploaded!')
     }catch(err){
         console.error('upload error:', err);
-        res.status(500).send('Ошибка сервера');
+        return res.status(500).send('Ошибка сервера');
     }
 })
 
