@@ -72,6 +72,7 @@ app.post('/upload', tokenVerify, upload.array('files'), (req, res) => {
 app.get('/getUploads', (req, res) => {
     const {token} = req.body
     try{
+        return res.status(201).json({uploadedFiles: fs.readdirSync(path.join(__dirname, "uploads", jwt.decode(token, JWT_SECRET).login)))})
         return res.status(201).sendFile(path.join(__dirname, 'uploads', fs.readdirSync(path.join(__dirname, "uploads")))) // ???
     }catch(err){
         console.error('getUploads error:', err);
