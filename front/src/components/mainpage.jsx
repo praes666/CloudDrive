@@ -118,6 +118,14 @@ export default function App() {
 		}
         <div className="mainpage">
         	<FileContainer/>
+			{
+				userFile.lenght > 0 ? userFile.map(file => {
+					return <FileContainer key={file.id} file={file}/>
+				})
+
+				:
+				<p> У вас ещё нет загруженных файлов, загрузите их!</p>
+			}
         </div>
       </div>
     );
