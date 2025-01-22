@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { FaCirclePlus } from "react-icons/fa6";
 import { IoIosCloudDownload } from "react-icons/io";
@@ -9,6 +9,7 @@ import FileContainer from './fileContainer.jsx';
 export default function App() {
     const [authData, setAuthdata] = useState({login: '', password: ''})
     const [fileList, setFileList] = useState([])
+	const [userFile, setUserFile] = useState([])
 	const [authvis, setAuthvis] = useState(false)
 	const [addFile, setAddFile] = useState(false)
 
@@ -54,6 +55,17 @@ export default function App() {
         }
     }
 
+	useEffect(() => {
+		try{
+			const token = localStorage.getItme('token')
+            const response = await axios.post('http://localhost:3000/getUploads', token)
+			console.log('response: ', response.data.uploadedFiles)
+			if(response.status == 201) setUserFile(response.data.uploadedFiles)
+        } catch(error){
+            console.error(error)
+        }
+	}, [])
+	
     return (
       <div>
         <div className="header">
