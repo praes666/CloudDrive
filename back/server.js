@@ -61,10 +61,20 @@ const upload = multer({storage})
 
 app.post('/upload', tokenVerify, upload.array('files'), (req, res) => {
     try{
-        // await db.query
+        // await db.query('INSERT INTO files (user_id, file_path, file_name) VALUES ($1, $2, $3)', [req.user.id, ])
         return res.status(201).send('File uploaded!')
     }catch(err){
         console.error('upload error:', err);
+        return res.status(500).send('Ошибка сервера');
+    }
+})
+
+app.get('/getUploads', (req, res) => {
+    const {token} = req.body
+    try{
+        return res.status(201).sendFile(path.join(__dirname, 'uploads', fs.readdirSync(path.join(__dirname, "uploads")))) // ???
+    }catch(err){
+        console.error('getUploads error:', err);
         return res.status(500).send('Ошибка сервера');
     }
 })
