@@ -28,15 +28,13 @@ export default function App() {
 				formData.append('files', file)
 			})
 			const token = localStorage.getItem('token')
-			console.log(fileList)
-			console.log('formData: ', formData)
 			const response = await axios.post('http://localhost:3000/upload', formData, {headers: {
 				Authorization: token,
 				'Content-Type': 'multipart/form-data'
 			}})
 			if(response.status == 201){
 				window.location.reload()
-			}
+		}
 		}catch(err){
 			console.error('upload files error', err)
 		}
@@ -55,15 +53,34 @@ export default function App() {
         }
     }
 
-	useEffect(() => {
-		try{
-			const token = localStorage.getItme('token')
-            const response = await axios.post('http://localhost:3000/getUploads', token)
-			console.log('response: ', response.data.uploadedFiles)
+    const loadUploads = async () => {
+    	try{
+			const token = localStorage.getItem('token')
+			const response = await axios.post('http://localhost:3000/getUploads', {token})
 			if(response.status == 201) setUserFile(response.data.uploadedFiles)
-        } catch(error){
-            console.error(error)
-        }
+		}catch(error){
+			console.error(error)
+		}
+    }
+
+	const tokenCheck = async () => {
+		try{
+			const token = localStorage.getItem('token')
+			if(token != null){
+				const response = await axios.post('http://localhost:3000/checkValidToken', {token})
+				if(response.data.isValid != true){
+					localStorage.removeItem('token')
+					return false
+				}
+				return true
+			}
+			return false
+		} catch(error){
+			console.error('tokenCheck error:', error)
+		}}
+	useEffect(() => {
+		tokenCheck()
+		loadUploads()
 	}, [])
 	
     return (
@@ -106,23 +123,25 @@ export default function App() {
 		{
 			addFile ? 
 			<div className='addFileInv' onClick={() => setAddFile(false)}>
-				<div className='addFileField' onClick={(e) => e.stopPropagation()}>
-					<input type="file" name='files' multiple onChange={fileListChange}/>
-          			<button onClick={uploadFile}>upload</button>
+				<div className='addFileField'>
+					<label htmlFor="fileinput" onClick={(e) => e.stopPropagation()}>
+						<input id='fileinput' type="file" name='files' multiple onChange={fileListChange}/>
 					<IoIosCloudDownload className='icon'/>
 					<p>Перетащите сюда файл!</p>
+					</label>
+					<div onClick={uploadFile}>
+						<p>Загрузить</p>
+					</div>
 				</div>
 			</div>
 			:
 			null
 		}
         <div className="mainpage">
-        	<FileContainer/>
 			{
-				userFile.lenght > 0 ? userFile.map(file => {
-					return <FileContainer key={file.id} file={file}/>
+				userFile.length > 0 ? userFile.map(file => {
+					return (<FileContainer key={file}file={file}/>)
 				})
-
 				:
 				<p> У вас ещё нет загруженных файлов, загрузите их!</p>
 			}

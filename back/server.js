@@ -5,12 +5,13 @@ const path = require('path')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken');
 const db = require('./db')
+const fs = require('fs');
 
 const app = express()
 const port = 3000;
 app.use(cors());
 app.use(express.json())
-const JWS_SECRET = 'CloudDrive'
+const JWT_SECRET = 'CloudDrive'
 
 app.post('/auth', async (req, res) => {
     const {authData, type} = req.body
@@ -27,7 +28,7 @@ app.post('/auth', async (req, res) => {
             const user = await db.query('SELECT * FROM users WHERE login = $1', [authData.login])
             if(user.rowCount == 0) return res.status(201).json({message: 'Пользователя не существует!'})
             if(!bcrypt.compareSync(authData.password, user.rows[0].password)) return res.status(201).json({message: 'Неверный пароль'}) 
-            const token = jwt.sign({id: user.rows[0].users_id, login: user.rows[0].login}, JWS_SECRET, {expiresIn: '1h'})
+            const token = jwt.sign({id: user.rows[0].users_id, user_id: user.rows[0].user_id,login: user.rows[0].login}, JWT_SECRET, {expiresIn: '1h'})
             return res.status(201).json({message: 'Успешная авторизация', token: token})
         }
     }catch(err){
@@ -39,19 +40,19 @@ app.post('/auth', async (req, res) => {
 
 
 const tokenVerify = (req, res, next) => {
-    if(jwt.verify(req.headers.authorization, JWS_SECRET)){
-        req.user = jwt.decode(req.headers.authorization, JWS_SECRET)
+    if(jwt.verify(req.headers.authorization, JWT_SECRET)){
+        req.user = jwt.decode(req.headers.authorization, JWT_SECRET)
         next()
     }
 }
 
 const storage = multer.diskStorage({
     destination: (req, file, cd) => {
-        const userFolder = path.join(__dirname, 'uploads', req.user.login)
+        const userFolder = path.join(__dirname, '../uploads', req.user.login)
         if (!fs.existsSync(userFolder)) {
             fs.mkdirSync(userFolder, { recursive: true })
         }
-        cb(null, userFolder)
+        cd(null, userFolder)
     },
     filename: (req, file, cd) => {
         cd(null, `${Date.now()}-${file.originalname}`)
@@ -61,7 +62,6 @@ const upload = multer({storage})
 
 app.post('/upload', tokenVerify, upload.array('files'), (req, res) => {
     try{
-        // await db.query('INSERT INTO files (user_id, file_path, file_name) VALUES ($1, $2, $3)', [req.user.id, ])
         return res.status(201).send('File uploaded!')
     }catch(err){
         console.error('upload error:', err);
@@ -69,13 +69,44 @@ app.post('/upload', tokenVerify, upload.array('files'), (req, res) => {
     }
 })
 
-app.get('/getUploads', (req, res) => {
+app.post('/getUploads', (req, res) => {
     const {token} = req.body
     try{
-        return res.status(201).json({uploadedFiles: fs.readdirSync(path.join(__dirname, "uploads", jwt.decode(token, JWT_SECRET).login)))})
-        return res.status(201).sendFile(path.join(__dirname, 'uploads', fs.readdirSync(path.join(__dirname, "uploads")))) // ???
+        const files = fs.readdirSync(path.join(__dirname, "../uploads", jwt.decode(token, JWT_SECRET).login))
+        return res.status(201).json({uploadedFiles: files})
     }catch(err){
         console.error('getUploads error:', err);
+        return res.status(500).send('Ошибка сервера');
+    }
+})
+
+app.post('/checkValidToken', async (req, res) => {
+    const {token} = req.body
+    try{
+        if(jwt.verify(token, JWT_SECRET)) return res.status(201).json({isValid: true})
+            else return res.status(201).json({isValid: false})
+    }catch(error){
+        console.log('TokinValidError db error:', error)
+        return res.status(201).json({isValid: false})
+    }
+})
+
+app.get('/download/:login/:file', async (req, res) => {
+    try{
+        res.setHeader('Content-Disposition', `attachment; filename="${req.params.file}"`);
+        return res.status(201).sendFile(path.join(__dirname, '../uploads', req.params.login, req.params.file))
+    }catch(err){
+        console.error('download file error:', err);
+        return res.status(500).send('Ошибка сервера');
+    }
+})
+
+app.get('/delete/:login/:file', async (req, res) => {
+    try{
+        fs.unlinkSync(path.join(__dirname, '../uploads', req.params.login, req.params.file))
+        res.status(201).json({message: 'ok'})
+    }catch(err){
+        console.error('delete file error:', err);
         return res.status(500).send('Ошибка сервера');
     }
 })
