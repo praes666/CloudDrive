@@ -22,25 +22,38 @@ const aRef = useRef()
     }
 
     const downloadFile = async () => {
-        try{
-            const response = await axios.get(`http://localhost:3000/download/${JSON.parse(atob(localStorage.getItem('token').split('.')[1]))?.login}/${file}`)
-            const blob = await response.blob()
-            const url = window.URL.createObjectURL(blob)
-            aRef.href = url
-            console.log(url)
-            console.log(aRef.current.href)
-            aRef.click()
+        try {
+            const token = localStorage.getItem('token');
+
+            const { login } = JSON.parse(atob(token.split('.')[1]));
+            if(!login || !token) return;
+            const response = await axios.get(`http://localhost:3000/download/${login}/${file}`, {
+                headers: {
+                    Authorization: token
+                },
+                responseType: 'blob'
+            });
+
+            const blob = new Blob([response.data]);
+
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = file;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
             window.URL.revokeObjectURL(url);
-        } catch(error){
-            console.error(error)
+        } catch (error) {
+            console.error('Ошибка при скачивании файла:', error);
         }
-    }
+    };
 
     const deleteFile = async () => {
         try{
             const response = await axios.get(`http://localhost:3000/delete/${JSON.parse(atob(localStorage.getItem('token').split('.')[1]))?.login}/${file}`)
             console.log(response.status)
-            
+
             if(response.data.message == 'ok') window.location.reload()
         } catch(error){
             console.error(error)

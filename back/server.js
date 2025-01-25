@@ -91,15 +91,25 @@ app.post('/checkValidToken', async (req, res) => {
     }
 })
 
-app.get('/download/:login/:file', async (req, res) => {
-    try{
+app.get('/download/:login/:file', tokenVerify, async (req, res) => {
+    try {
+        const userFolder = path.join(__dirname, '../uploads', req.user.login);
+        const filePath = path.join(userFolder, req.params.file);
+
+        if (!fs.existsSync(filePath)) {
+            return res.status(404).json({ message: 'Файл не найден' });
+        }
+
         res.setHeader('Content-Disposition', `attachment; filename="${req.params.file}"`);
-        return res.status(201).sendFile(path.join(__dirname, '../uploads', req.params.login, req.params.file))
-    }catch(err){
-        console.error('download file error:', err);
-        return res.status(500).send('Ошибка сервера');
+        res.setHeader('Content-Type', 'application/octet-stream');
+
+        const fileStream = fs.createReadStream(filePath);
+        fileStream.pipe(res);
+    } catch (err) {
+        console.error('Download file error:', err);
+        res.status(500).send('Ошибка сервера');
     }
-})
+});
 
 app.get('/delete/:login/:file', async (req, res) => {
     try{
